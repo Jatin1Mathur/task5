@@ -1,12 +1,12 @@
 from flask_sqlalchemy import SQLAlchemy
-
+from datetime import datetime
 
 db=SQLAlchemy()
 
 class user(db.Model):
     __tablename__ = 'user'
 
-    user_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100),  nullable=False)
     password = db.Column(db.String(100), nullable=False)
@@ -23,59 +23,71 @@ class user(db.Model):
             
 class post(db.Model):
     __tablename__ = 'post'
-    post_id = db.Column(db.Integer , primary_key = True)
-    id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
-    title = db.Column(db.String(100), unique=True , nullable = False)
-    content = db.Column(db.String(6000), nullable = False)
-    author = db.Column(db.String(100), nullable = False)
-    creation_date = db.Column(db.DateTime , nullable = False )
-    tags = db.Column(db.String(50) , nullable = False )
-    
-    
-    
-    def __init__(self ,title , content , author , creation_date, tags ,blog_id,id):
-        self.author = author
-        self.content = content
-        self.title = title
-        self.creation_date = creation_date
-        self.tags = tags
-        self.blog_id = blog_id
-        self.id = id
-
-
-
-class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.String(3000), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
-    Comment_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
-
-
-    def __init__(self , id , body , timestamp , comment_id):
-        self.id = id 
-        self.body = body
-        self.timestamp = timestamp
-        self.Comment_id = comment_id
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    title = db.Column(db.String(100), unique=True, nullable=False)
+    content = db.Column(db.String(6000), nullable=False)
+    author = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    tags = db.Column(db.String(50), nullable=False)
+    views = db.Column(db.Integer, default=0)
+    
+    def __init__(self, title, content, author, tags ):
+        self.title = title
+        self.content = content
+        self.author = author
+        self.tags = tags
        
-class follow(db.Model):
-    follow_id = db.Column(nullable = False , primary_key = True )
-    following = db.Column( db.ForeignKey('user.user_id') ,nullable = False )  
-    follower = db.Column( db.ForeignKey('user.user_id') , nullable = False,)
-    
-    def __init__(self,id,following , follower):
-        self.id = id
-        self.following = following
-        self.follower = follower
+       
 
-class like(db.Model):
-    like_id = db.Column( primary_key = True , nullable = False)
-    like = db.Column(db.ForeignKey('post.id'), nullable = False   )
-    unlike = db.Column( db.ForeignKey('post.id'), nullable = False ,  nullable= False )
+
+
+        
+
+
+
+
+class comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(3000), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __init__(self, content, created_at, post_id, user_id):
+        self.content = content
+        self.created_at = created_at
+        self.post_id = post_id
+        self.user_id = user_id
+
+        
+        
+       
+      
+class Follow(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    following_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
-    def __init__(self , like_id , like , unlike):
-        self.like_id = like_id
-        self.like = like
-        self.unlike = unlike
+def __init__(self,following_id , follower_id):
+       
+       self.following_id = following_id
+       self.follower_id = follower_id
+
+class Like(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))  
+    status = db.Column(db.Boolean, default=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __init__(self, post_id, status, user_id): 
+        self.post_id = post_id
+        self.status = status
+        self.user_id = user_id
+
+
         
 
     
