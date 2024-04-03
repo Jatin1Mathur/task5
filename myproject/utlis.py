@@ -11,15 +11,17 @@ def new_post(title,content, author,tags):
         db.session.add(new_post)
         db.session.commit()
         
-def delete():
-        db.session.delete()
-        db.session.commit() 
-        
-def add():
-        db.session.add()
-        db.session.commit()
 
-
+def add(obj):
+    db.session.add(obj)
+    db.session.commit()
 
 def save_changes():
     db.session.commit()
+
+def delete(obj):
+    db.session.delete(obj)
+    db.session.commit()
+    
+def rollback():
+    db.session.rollback()

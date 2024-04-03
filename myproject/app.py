@@ -6,10 +6,9 @@ from datetime import datetime
 from flask_migrate import Migrate
 from model import  db , user, post , comment , Follow , Like
 from datetime import datetime
-from utlis import add_user , new_post , delete , save_changes , add
+from utlis import add_user , new_post , delete , save_changes , add , rollback
 from config import basesit
-
-
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config.from_object(basesit)
@@ -18,6 +17,7 @@ jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
 date = datetime.now()
+
 #User Management 
 @app.route("/register", methods=['POST'])
 def register_user():
@@ -42,42 +42,56 @@ def login():
     if not User:
         return jsonify({'message': 'User not found'}), 404
     if bcrypt.check_password_hash(User.password, password):
-        access_token = create_access_token(identity={'username': User.username, 'email': User.email, 'id': User.id})
+        access_token = create_access_token(identity={ 'id': User.id , 'username' : User.username })
         return jsonify({'access_token': access_token}), 200
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
-@app.route('/retrieve/<int:id>', methods=['GET'])
+@app.route('/retrieve', methods=['GET'])
 @jwt_required()
-def get_user(id):
-    User = user.query.get(id)
-    if User:
-        return jsonify({'username': User.username, 'email': User.email})
-    else:
-        return jsonify({'message': 'User not found'})
+def get_user_info():
+    current_user = get_jwt_identity()
+    user_id = current_user.get('id')
+    if user_id:
+        User = user.query.get(user_id)
+        if User:
+            return jsonify({'email': User.email, 'username': User.username})
+    return jsonify({'message': 'User not found'}), 404
+  
 
-@app.route("/update/<int:id>", methods=['PUT'])
+@app.route("/update", methods=['PUT'])
 @jwt_required()
-def update_user(id):
-    User = user.query.get(id)
-    if not User:
-        return jsonify({'error': 'User not found'})
+def update_user():
     data = request.json
-    User.email = data.get('email', User.email)
-    User.username = data.get('username', User.username)
-    db.session.commit()
-    return jsonify({'message': 'User updated successfully'})
-
-@app.route("/delete/<int:id>", methods=['DELETE'])
-@jwt_required()
-def delete_user(id):
-    User = user.query.get(id)
+    user_id = data.get('id')
+    if not user_id:
+        return jsonify({'error': 'User ID is missing in the request body'}), 400
+    User = user.query.get(user_id)
     if not User:
         return jsonify({'error': 'User not found'}), 404
-    db.session.delete(User)
-    db.session.commit()
-    return jsonify({'message': 'User deleted successfully'})
+    new_username = data.get('username', User.username)
+    existing_user = user.query.filter(user.username == new_username).filter(user.id != user_id).first()
+    if existing_user:
+        return jsonify({'error': 'Username already exists'}), 409
+    User.email = data.get('email', User.email)
+    User.username = new_username
+    try:
+        save_changes()
+        return jsonify({'message': 'User updated successfully'})
+    except IntegrityError:
+        rollback()
+        return jsonify({'error': 'Username already exists'}), 409
 
+
+@app.route("/delete", methods=['DELETE'])
+@jwt_required()
+def delete_user():
+    current_user = get_jwt_identity()
+    user_id = current_user.get('id')
+    if not user_id:
+        return jsonify({'error': 'User not found'}), 404
+        delete(user_id)
+    return jsonify({'message': 'User deleted successfully'})
 
 # Post Management
 @app.route("/create_blog", methods=['POST'])
@@ -85,34 +99,56 @@ def delete_user(id):
 def create_blog():
     data = request.json
     title = data.get('title')
-    author = get_jwt_identity()['username'] 
+    user_identity = get_jwt_identity()  
+    user_id = user_identity.get('id') 
+    author = data.get('author')
     content = data.get('content')
     tags = data.get('tags')
     if not all([title, author, content, tags]):
         return jsonify({'error': 'All fields need to be provided'}), 400
-    if post.query.filter_by(title=title).first() or post.query.filter_by(content=content).first():
-        return jsonify({'error': 'A post with this title or content already exists'}), 409
-    new_post(title,content, author,tags)
+    if post.query.filter_by(title=title).first():
+        return jsonify({'error': 'A post with this title already exists'}), 409
+    new_post(title, content, author, tags)
     return jsonify({'message': 'Blog post created successfully'}), 201
 
-@app.route("/retrieve_posts/<int:id>" , methods = ['GET'])
+@app.route("/retrieve_posts/<int:id>", methods=['GET'])
 def retrieve_posts(id=None):
-    Users = post.query.get(id)
-    if Users:
-        return jsonify({'title': Users.title, 'content': Users.content , 'created_at' : Users.created_at , 'author' : Users.author , 'tags' : Users.tags })
+    if id is not None:
+        post_by_id = post.query.get(id)
+        if post_by_id:
+            return jsonify({'title': post_by_id.title, 'content': post_by_id.content,
+                            'created_at': post_by_id.created_at, 'author': post_by_id.author,
+                            'tags': post_by_id.tags})
+        else:
+            return jsonify({'message': 'Post not found'}), 404
     else:
-        return jsonify({'message': 'Post not found'}), 404
-    
+        user_id = request.args.get('user_id')
+        if user_id:
+            user_posts = post.query.filter_by(user_id=user_id).all()
+            if user_posts:
+                posts_data = [{'title': p.title, 'content': p.content,
+                               'created_at': p.created_at, 'author': p.author,
+                               'tags': p.tags} for p in user_posts]
+                return jsonify(posts_data), 200
+            else:
+                return jsonify({'message': 'No posts found for the specified user'}), 404
+        else:
+            return jsonify({'error': 'User ID not provided in the query parameters'}), 400
+
+
 @app.route("/delete_posts/<int:id>", methods=['DELETE'])
 def delete_post(id):
-    Post = post.query.get(id)  
-    if not Post:
+    post_to_delete = post.query.get(id)
+    if not post_to_delete:
         return jsonify({'error': 'Post not found'}), 404
-    db.session.delete(Post)
-    db.session.commit() 
-    return jsonify({'message': 'Post deleted successfully'}), 200
+    comments_to_delete = comment.query.filter_by(post_id=id).all()
+    for c in comments_to_delete:  
+        db.session.delete(c)
+    delete(post_to_delete)
+    return jsonify({'message': 'Post and associated comments deleted successfully'}), 200
 
-@app.route("/update_posts/<int:post_id>", methods=['PUT'])
+
+@app.route("/update_posts/<int:post_id>", methods=['PATCH'])
 def update_post(post_id):
     Post = post.query.get(post_id)
     if not Post:
@@ -129,7 +165,8 @@ def update_post(post_id):
 @app.route('/posts/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def create_comment(post_id):
-    current_user_id = get_jwt_identity()['id']  
+    current_user_id = get_jwt_identity()
+    user_by_id = current_user_id.get('id')   
     content = request.json.get('content')
     if not content:
         return jsonify({'error': 'Content is required'}), 400
@@ -137,13 +174,12 @@ def create_comment(post_id):
     if not target_post:
         return jsonify({'error': 'Post not found'}), 404
     new_comment = comment(
-        user_id=current_user_id,
+        user_id=user_by_id,
         post_id=post_id,
         content=content,
         created_at=datetime.now()
     )
-    db.session.add(new_comment)
-    db.session.commit()
+    add(new_comment)
     return jsonify({'message': 'Comment added successfully'}), 201
 
 
@@ -168,8 +204,6 @@ def delete_comment(comment_id):
     delete(target_comment)
     return jsonify({'message': 'Comment deleted successfully'}), 200
 
-
-
 # Following and Followers Management
 @app.route("/follow/<int:user_id>", methods=['POST'])
 @jwt_required()
@@ -178,13 +212,12 @@ def follow_user(user_id):
 
     if current_user_id == user_id:
         return jsonify({'error': 'You cannot follow yourself'}), 400
-    
+
     if Follow.query.filter_by(following_id=user_id, follower_id=current_user_id).first():
         return jsonify({'error': 'You are already following this user'}), 400
 
     new_follow = Follow(following_id=user_id, follower_id=current_user_id)
-    db.session.add(new_follow)
-    db.session.commit()
+    add(new_follow)
     return jsonify({'message': 'You are now following this user'}), 201
 
 # Unfollow a user
@@ -197,8 +230,7 @@ def unfollow_user(user_id):
     if not follow_entry:
         return jsonify({'error': 'You are not following this user'}), 400
 
-    db.session.delete(follow_entry)
-    db.session.commit() 
+    delete(follow_entry)
     return jsonify({'message': 'You have unfollowed this user'}), 200
 
 
@@ -233,8 +265,7 @@ def like_post(post_id):
     if Like.query.filter_by(post_id=post_id, user_id=current_user_id).first():
         return jsonify({'error': 'You have already liked this post'})
     new_like = Like(post_id=post_id, status=True, user_id=current_user_id)
-    db.session.add(new_like)
-    db.session.commit()
+    add(new_like)
     return jsonify({'message': 'You have liked this post'}), 201
 
 @app.route("/unlike/<int:post_id>", methods=['POST'])
@@ -246,8 +277,7 @@ def unlike_post(post_id):
     if not like_entry:   
         return jsonify({'error': 'You have not liked this post'}), 400
 
-    db.session.delete(like_entry)
-    db.session.commit()
+    delete(like_entry)
     return jsonify({'message': 'You have unliked this post'}), 200
 
 @app.route("/post/<int:post_id>/likes", methods=['GET'])
@@ -269,4 +299,3 @@ def view_post(post_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
