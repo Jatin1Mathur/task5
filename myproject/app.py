@@ -9,7 +9,7 @@ from datetime import datetime
 from utlis import add_user , new_post , delete , save_changes , add , rollback
 from config import basesit
 from sqlalchemy.exc import IntegrityError
-
+from flask_ngrok import run_with_ngrok 
 app = Flask(__name__)
 app.config.from_object(basesit)
 db.init_app(app)
@@ -17,7 +17,7 @@ jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
 date = datetime.now()
-
+run_with_ngrok(app) 
 #User Management 
 @app.route("/register", methods=['POST'])
 def register_user():
@@ -298,4 +298,4 @@ def view_post(post_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
