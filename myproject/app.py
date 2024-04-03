@@ -1,15 +1,15 @@
-from flask import Flask, request, jsonify , blueprints 
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from datetime import datetime
 from flask_bcrypt import Bcrypt
-from datetime import datetime
 from flask_migrate import Migrate
-from model import  db , user, post , comment , Follow , Like
-from datetime import datetime
-from utlis import add_user , new_post , delete , save_changes , add , rollback
 from config import basesit
 from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
+from flask import Flask, request, jsonify
+from model import db, user, post, comment, Follow, Like
+from utlis import  delete, save_changes, add, rollback 
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required 
+from flask_jwt_extended import get_jwt_identity
+
 app = Flask(__name__)
 app.config.from_object(basesit)
 db.init_app(app)
@@ -17,8 +17,9 @@ jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
 date = datetime.now()
-run_with_ngrok(app) 
-#User Management 
+run_with_ngrok(app)
+
+ 
 @app.route("/register", methods=['POST'])
 def register_user():
     data = request.json
@@ -30,8 +31,10 @@ def register_user():
     if user.query.filter_by(email=email).first() or user.query.filter_by(username=username).first():
         return jsonify({'error': 'User with this email or username already exists'}), 409
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    add_user(email,username , hashed_password)
+    new_user = user(email=email, username=username, password=hashed_password)
+    add(new_user)
     return jsonify({'message': 'User created successfully'}), 201
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -47,6 +50,7 @@ def login():
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
+
 @app.route('/retrieve', methods=['GET'])
 @jwt_required()
 def get_user_info():
@@ -59,8 +63,6 @@ def get_user_info():
     return jsonify({'message': 'User not found'}), 404
   
 
-@app.route("/update", methods=['PUT'])
-@jwt_required()
 def update_user():
     data = request.json
     user_id = data.get('id')
@@ -93,14 +95,15 @@ def delete_user():
         delete(user_id)
     return jsonify({'message': 'User deleted successfully'})
 
+
 # Post Management
+
+
 @app.route("/create_blog", methods=['POST'])
 @jwt_required()
 def create_blog():
     data = request.json
     title = data.get('title')
-    user_identity = get_jwt_identity()  
-    user_id = user_identity.get('id') 
     author = data.get('author')
     content = data.get('content')
     tags = data.get('tags')
@@ -108,8 +111,10 @@ def create_blog():
         return jsonify({'error': 'All fields need to be provided'}), 400
     if post.query.filter_by(title=title).first():
         return jsonify({'error': 'A post with this title already exists'}), 409
-    new_post(title, content, author, tags)
+    new_post = post(title=title, content=content, author=author, tags=tags)
+    add(new_post)
     return jsonify({'message': 'Blog post created successfully'}), 201
+
 
 @app.route("/retrieve_posts/<int:id>", methods=['GET'])
 def retrieve_posts(id=None):
@@ -192,6 +197,7 @@ def get_comments(post_id):
     comments_data = [{'id': c.id, 'content': c.content, 'created_at': c.created_at} for c in comments]
     return jsonify(comments_data), 200
 
+
 @app.route('/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(comment_id):
@@ -205,6 +211,8 @@ def delete_comment(comment_id):
     return jsonify({'message': 'Comment deleted successfully'}), 200
 
 # Following and Followers Management
+
+
 @app.route("/follow/<int:user_id>", methods=['POST'])
 @jwt_required()
 def follow_user(user_id):
@@ -221,6 +229,8 @@ def follow_user(user_id):
     return jsonify({'message': 'You are now following this user'}), 201
 
 # Unfollow a user
+
+
 @app.route("/unfollow/<int:user_id>", methods=['POST'])
 @jwt_required()
 def unfollow_user(user_id):
@@ -258,6 +268,8 @@ def get_followers():
     return jsonify(followers_info), 200
 
 # Like Management
+
+
 @app.route("/like/<int:post_id>", methods=['POST'])
 @jwt_required()
 def like_post(post_id):
@@ -267,6 +279,7 @@ def like_post(post_id):
     new_like = Like(post_id=post_id, status=True, user_id=current_user_id)
     add(new_like)
     return jsonify({'message': 'You have liked this post'}), 201
+
 
 @app.route("/unlike/<int:post_id>", methods=['POST'])
 @jwt_required()
@@ -279,6 +292,7 @@ def unlike_post(post_id):
 
     delete(like_entry)
     return jsonify({'message': 'You have unliked this post'}), 200
+
 
 @app.route("/post/<int:post_id>/likes", methods=['GET'])
 def get_post_likes(post_id):
