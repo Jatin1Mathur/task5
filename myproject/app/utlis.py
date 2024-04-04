@@ -1,4 +1,4 @@
-from model import db, user, post
+from app.models.model import db
 
 
 def add(obj):
