@@ -273,16 +273,18 @@ def get_followers():
 @app.route("/like/<int:post_id>", methods=['POST'])
 @jwt_required()
 def like_post(post_id):
-    current_user_id = get_jwt_identity()['id']
-    if Like.query.filter_by(post_id=post_id, user_id=current_user_id).first():
-        return jsonify({'error': 'You have already liked this post'})
+    current_user_id = get_jwt_identity()
+    user_by_id = current_user_id.get('id')
+    if Like.query.filter_by(post_id=post_id, user_id=user_by_id).first():
+        return jsonify({'error': 'You have already liked this post'}), 400
+    
     new_like = Like(post_id=post_id, status=True, user_id=current_user_id)
     add(new_like)
     return jsonify({'message': 'You have liked this post'}), 201
 
 
 @app.route("/unlike/<int:post_id>", methods=['POST'])
-@jwt_required()
+@jwt_required() 
 def unlike_post(post_id):
     current_user_id = get_jwt_identity()['id']
     like_entry = Like.query.filter_by(post_id=post_id, user_id=current_user_id).first()
