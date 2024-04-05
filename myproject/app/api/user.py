@@ -1,16 +1,12 @@
-from datetime import datetime
-from flask_bcrypt import Bcrypt
-from flask_migrate import Migrate
 from config import basesit
 from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
-from app.models.model import db, user, post, comment, Follow, Like
+from app.models.model import db, user
 from app.utlis import  delete, save_changes, add, rollback 
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required 
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required ,get_jwt_identity
 from app import bcrypt
-bluep= Blueprint('authh',__name__,url_prefix='/auth')
+bluep= Blueprint('auth',__name__,url_prefix='/auth')
 
 @bluep.route("/register", methods=['POST'])
 def register_user():
@@ -47,9 +43,11 @@ def login():
 @jwt_required()
 def get_user_info():
     current_user = get_jwt_identity()
-    user_id = current_user.get('id')
-    if user_id:
-        User = user.query.get(user_id)
+    #user_id = current_user.get('id')
+    print(current_user['id'], "kjgjhghjg")
+    
+    if current_user['id']:
+        User = user.query.get(current_user['id'])
         if User:
             return jsonify({'email': User.email, 'username': User.username})
     return jsonify({'message': 'User not found'}), 404
