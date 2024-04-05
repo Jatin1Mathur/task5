@@ -1,14 +1,12 @@
-from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from config import basesit
-from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
-from app.models.model import db, user, post, comment, Follow, Like
-from app.utlis import  delete, save_changes, add, rollback 
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required 
-from flask_jwt_extended import get_jwt_identity
+from app.models.model import db, post, Like
+from app.utlis import  delete, save_changes, add
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required ,get_jwt_identity
+
  
 
 bluep = bluep = Blueprint('like', __name__ , url_prefix = '/auth')
