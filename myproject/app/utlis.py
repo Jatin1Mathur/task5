@@ -14,5 +14,6 @@ def delete(obj):
     db.session.delete(obj)
     db.session.commit()
 
+
 def rollback():
     db.session.rollback()

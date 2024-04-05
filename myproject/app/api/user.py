@@ -3,12 +3,14 @@ from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
 from app.models.model import db, user
-from app.utlis import  delete, save_changes, add, rollback 
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required ,get_jwt_identity
+from app.utlis import delete, save_changes, add, rollback 
+from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import bcrypt
-bluep= Blueprint('auth',__name__,url_prefix='/auth')
 
-@bluep.route("/register", methods=['POST'])
+
+bp=Blueprint('auth', __name__, url_prefix='/auth')
+@bp.route("/register", methods=['POST'])
 def register_user():
     data = request.json
     email = data.get('email')
@@ -24,7 +26,7 @@ def register_user():
     return jsonify({'message': 'User created successfully'}), 201
 
 
-@bluep.route('/login', methods=['POST'])
+@bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get('email')
@@ -33,26 +35,24 @@ def login():
     if not User:
         return jsonify({'message': 'User not found'}), 404
     if bcrypt.check_password_hash(User.password, password):
-        access_token = create_access_token(identity={ 'id': User.id , 'username' : User.username })
+        access_token = create_access_token(identity={'id': User.id, 'username': User.username})
         return jsonify({'access_token': access_token}), 200
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
 
-@bluep.route('/retrieve', methods=['GET'])
+@bp.route('/retrieve', methods=['GET'])
 @jwt_required()
 def get_user_info():
     current_user = get_jwt_identity()
-    #user_id = current_user.get('id')
-    print(current_user['id'], "kjgjhghjg")
-    
     if current_user['id']:
         User = user.query.get(current_user['id'])
         if User:
             return jsonify({'email': User.email, 'username': User.username})
     return jsonify({'message': 'User not found'}), 404
-  
-@bluep.route('/update', methods=['PUT'])
+
+
+@bp.route('/update', methods=['PUT'])
 def update_user():
     data = request.json
     user_id = data.get('id')
@@ -75,7 +75,7 @@ def update_user():
         return jsonify({'error': 'Username already exists'}), 409
 
 
-@bluep.route("/delete", methods=['DELETE'])
+@bp.route("/delete", methods=['DELETE'])
 @jwt_required()
 def delete_user():
     current_user = get_jwt_identity()

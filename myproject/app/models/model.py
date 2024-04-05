@@ -9,7 +9,7 @@ class user(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique = True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
     
     def __init__(self, email, username, password):
@@ -21,7 +21,7 @@ class user(db.Model):
 class post(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete ='cascade'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete='cascade'))
     title = db.Column(db.String(100), unique=True, nullable=False)
     content = db.Column(db.String(6000), nullable=False)
     author = db.Column(db.String(100), nullable=False)
@@ -53,8 +53,8 @@ class comment(db.Model):
      
 class Follow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    follower_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete = 'cascade'))
-    following_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete = 'cascade'), nullable=False)
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'))
+    following_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     def __init__(self, following_id, follower_id):
@@ -66,7 +66,7 @@ class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))  
     status = db.Column(db.Boolean, default=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete = 'cascade'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'))
 
     def __init__(self, post_id, status, user_id): 
         self.post_id = post_id

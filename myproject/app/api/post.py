@@ -1,16 +1,15 @@
-
 from config import basesit
 from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
 from app.models.model import db, post, comment
-from app.utlis import  delete, save_changes, add, rollback 
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required 
+from app.utlis import delete, save_changes, add, rollback 
+from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import jwt_required 
 
  
-bluep= Blueprint('autho',__name__,url_prefix='/auth')
-
-@bluep.route("/create_blog", methods=['POST'])
+bp= Blueprint('autho',__name__, url_prefix='/auth')
+@bp.route("/create_blog", methods=['POST'])
 @jwt_required()
 def create_blog():
     data = request.json
@@ -27,7 +26,7 @@ def create_blog():
     return jsonify({'message': 'Blog post created successfully'}), 201
 
 
-@bluep.route("/retrieve_posts/<int:id>", methods=['GET'])
+@bp.route("/retrieve_posts/<int:id>", methods=['GET'])
 def retrieve_posts(id=None):
     if id is not None:
         post_by_id = post.query.get(id)
@@ -52,7 +51,7 @@ def retrieve_posts(id=None):
             return jsonify({'error': 'User ID not provided in the query parameters'}), 400
 
 
-@bluep.route("/delete_posts/<int:id>", methods=['DELETE'])
+@bp.route("/delete_posts/<int:id>", methods=['DELETE'])
 def delete_post(id):
     post_to_delete = post.query.get(id)
     if not post_to_delete:
@@ -64,7 +63,7 @@ def delete_post(id):
     return jsonify({'message': 'Post and associated comments deleted successfully'}), 200
 
 
-@bluep.route("/update_posts/<int:post_id>", methods=['PATCH'])
+@bp.route("/update_posts/<int:post_id>", methods=['PATCH'])
 def update_post(post_id):
     Post = post.query.get(post_id)
     if not Post:
