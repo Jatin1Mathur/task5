@@ -1,8 +1,8 @@
 from app.models.model import user 
 
 
-def user_filter(username,email):
-    return(user.query.filter(user.db.and_(user.username  == username,  user.email == email)).first())
+def user_filter(email):
+    return(user.query.filter(user.email == email)).first()
 
 def User_id(obj):
     return (user.query.get(obj))

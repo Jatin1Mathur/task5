@@ -22,10 +22,10 @@ def create_app():
     migrate.init_app(app, db)
     
     from app.api import commant, follow, like, post, user
-    app.register_blueprint(user.bp)
-    app.register_blueprint(follow.bp)
-    app.register_blueprint(like.bp)
-    app.register_blueprint(post.bp)
-    app.register_blueprint(commant.bp)
+    app.register_blueprint(user.blueprint)
+    app.register_blueprint(follow.blueprint)
+    app.register_blueprint(like.blueprint)
+    app.register_blueprint(post.blueprint)
+    app.register_blueprint(commant.blueprint)
 
     return app

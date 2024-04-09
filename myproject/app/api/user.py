@@ -1,9 +1,7 @@
-
 from sqlalchemy.exc import IntegrityError
-#from flask_ngrok import run_with_ngrok 
+from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint , Response
-from flask_jwt_extended import JWTManager, create_access_token
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token , jwt_required, get_jwt_identity
 
 from app.models.model import db, user
 from app.utlis import delete, save_changes, add, rollback 
@@ -15,23 +13,20 @@ from app.validator.validators import check_user_required_fields
 from config import basesit
 
 
-bp=Blueprint('auth', __name__, url_prefix='/auth')
-@bp.route("/register", methods=['POST'])
+blueprint=Blueprint('auth', __name__, url_prefix='/auth')
+@blueprint.route("/register", methods=['POST'])
 def register_user():
     data = request.json
-    email = data.get('email')
-    username = data.get('username')
-    password = data.get('password')
-    if  not check_user_required_fields(data):
+    if not check_user_required_fields(data):
         return e_response('400')
-    if existing_users(username, email):  
-        return  e_response('409')
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    new_user = user(email=email, username=username, password=hashed_password)  
+    if user_filter(data.get('email')):
+        return e_response('400')
+    hashed_password = bcrypt.generate_password_hash(data.get('password')).decode('utf-8')
+    new_user = user(data.get('email'), data.get('username'), password=hashed_password)
     add(new_user)
-    return success_response( 'User created successfully' , 201)  
+    return success_response( "User created successfully",200)  
 
-@bp.route('/login', methods=['POST'])
+@blueprint.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get('email')
@@ -45,7 +40,7 @@ def login():
     else:
         return e_response('401')
     
-@bp.route('/retrieve', methods=['GET'])
+@blueprint.route('/retrieve', methods=['GET'])
 @jwt_required()
 def get_user_info():
     current_user = get_jwt_identity()
@@ -56,13 +51,14 @@ def get_user_info():
     return e_response('401')
 
 
-@bp.route('/update', methods=['PUT'])
+@blueprint.route('/update', methods=['PUT'])
+@jwt_required()
 def update_user():
     data = request.json
-    user_id = data.get('id')
-    if not user_id:
-        return e_response('400')
-    User = User_update(user_id)
+    user_id = get_jwt_identity()
+    User = User_update(user_id['id'])
+    if not User:
+        return e_response('400') 
     if not User:
         return e_response('404')
     new_username = data.get('username', User.username)
@@ -79,7 +75,7 @@ def update_user():
         return e_response('409')
 
 
-@bp.route("/delete", methods=['DELETE'])
+@blueprint.route("/delete", methods=['DELETE'])
 @jwt_required()
 def delete_user():
     current_user = get_jwt_identity()
