@@ -9,3 +9,6 @@ def post_by_id(obj):
 def user_posts(user_id):
     return (post.query.filter_by(user_id=user_id).all())
 
+def user_update(post_id):
+    return post.query.get(post_id)
+

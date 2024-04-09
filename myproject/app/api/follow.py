@@ -1,10 +1,11 @@
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
-from app.models.model import db, user, Follow
-from app.utlis import delete, add 
 from flask_jwt_extended import JWTManager, create_access_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_migrate import Migrate
+
+from app.models.model import db, user, Follow
+from app.utlis import delete, add 
 from app.services.follow_services import follow_filter , follow_users , data
 from app.error_management.error_response import e_response , Response
 from app.error_management.success_response import success_response
@@ -28,12 +29,12 @@ def follow_user(user_id):
 @jwt_required()
 def unfollow_user(user_id):
     current_user_id = get_jwt_identity()['id']
-    follow_filter(user_id , current_user_id)
+    follow = follow_filter(user_id , current_user_id)
 
-    if not follow_filter:
+    if not follow:
         return e_response('400')
 
-    delete(follow_filter)
+    delete(follow)
     return success_response( 'You have unfollowed this user' , 200)
 
 

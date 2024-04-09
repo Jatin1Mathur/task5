@@ -13,6 +13,6 @@ def User_log(email):
 def User_update(user_id):
     return (user.query.get(user_id))
 
-def existing_user(new_username , user_id): 
+def existing_users(new_username , user_id): 
     return (user.query.filter(user.username == new_username).filter(user.id != user_id).first())
 
