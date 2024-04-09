@@ -17,3 +17,8 @@ def delete(obj):
 
 def rollback():
     db.session.rollback()
+    
+
+
+    
+    
