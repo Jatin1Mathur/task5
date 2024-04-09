@@ -8,9 +8,9 @@ def like_entry(post_id ,current_user_id ):
         post_id=post_id,
         user_id=current_user_id).first())
     
-def likes_get(post_id):
+def get_likes(post_id):
     return(Like.query.filter_by(post_id=post_id).all())
 
-def target_p(post_id):
+def target_view(post_id):
     return(post.query.get(post_id))
 

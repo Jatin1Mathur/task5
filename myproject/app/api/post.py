@@ -2,8 +2,7 @@
 from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
-from flask_jwt_extended import JWTManager, create_access_token
-from flask_jwt_extended import jwt_required 
+from flask_jwt_extended import JWTManager, create_access_token , jwt_required 
 
 from app.models.model import db, post, comment
 from app.utlis import delete, save_changes, add, rollback 
@@ -13,8 +12,8 @@ from app.error_management.success_response import success_response
 from app.validator.validators import check_post_required_fields
 from config import basesit
  
-bp= Blueprint('autho',__name__, url_prefix='/auth')
-@bp.route("/create_blog", methods=['POST'])
+blueprint= Blueprint('autho',__name__, url_prefix='/auth')
+@blueprint.route("/create_blog", methods=['POST'])
 @jwt_required()
 def create_blog():
     data = request.json
@@ -24,23 +23,23 @@ def create_blog():
     tags = data.get('tags')
     if not check_post_required_fields(data):
         return e_response('400')
-    if post.query.filter_by(title=title).first():
+    if post_re(title):
         return e_response('409')
     new_post = post(title=title, content=content, author=author, tags=tags)
     add(new_post)
     return success_response({'message': 'Blog post created successfully'} ,  201)
 
 
-@bp.route("/retrieve_posts/<int:id>", methods=['GET'])
+@blueprint.route("/retrieve_posts/<int:id>", methods=['GET'])
 def retrieve_posts(id=None):
     if id is not None:
-        Post = post_by_id(id)
-        if Post:
-            return jsonify({'title': Post.title,
-                            'content': Post.content,
-                            'created_at': Post.created_at,
-                            'author': Post.author,
-                            'tags': Post.tags})
+        Post_retrieve = post_by_id(id)
+        if Post_retrieve:
+            return jsonify({'title': Post_retrieve.title,
+                            'content': Post_retrieve.content,
+                            'created_at': Post_retrieve.created_at,
+                            'author': Post_retrieve.author,
+                            'tags': Post_retrieve.tags})
         else:
             return e_response('404')
     else:
@@ -58,7 +57,7 @@ def retrieve_posts(id=None):
             return e_response('400')
 
 
-@bp.route("/delete_posts/<int:id>", methods=['DELETE'])
+@blueprint.route("/delete_posts/<int:id>", methods=['DELETE'])
 def delete_post(id):
     Post = post_by_id(id)
     if not Post:
@@ -70,7 +69,7 @@ def delete_post(id):
     return success_response( 'Post and associated comments deleted successfully' , 200)
 
 
-@bp.route("/update_posts/<int:post_id>", methods=['PATCH'])
+@blueprint.route("/update_posts/<int:post_id>", methods=['PATCH'])
 def update_post(post_id):
     Post = user_update(post_id)
     if not Post:

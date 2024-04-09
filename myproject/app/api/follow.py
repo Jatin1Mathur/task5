@@ -1,7 +1,6 @@
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
-from flask_jwt_extended import JWTManager, create_access_token
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token , jwt_required, get_jwt_identity
 from flask_migrate import Migrate
 
 from app.models.model import db, user, Follow
@@ -10,8 +9,8 @@ from app.services.follow_services import follow_filter , follow_users , data
 from app.error_management.error_response import e_response , Response
 from app.error_management.success_response import success_response
 
-bp = Blueprint('authee', __name__, url_prefix='/auth')
-@bp.route("/follow/<int:user_id>", methods=['POST'])
+blueprint = Blueprint('authee', __name__, url_prefix='/auth')
+@blueprint.route("/follow/<int:user_id>", methods=['POST'])
 @jwt_required()
 def follow_user(user_id):
     current_user_id = get_jwt_identity()['id']
@@ -25,7 +24,7 @@ def follow_user(user_id):
 
 
 # Unfollow a user
-@bp.route("/unfollow/<int:user_id>", methods=['POST'])
+@blueprint.route("/unfollow/<int:user_id>", methods=['POST'])
 @jwt_required()
 def unfollow_user(user_id):
     current_user_id = get_jwt_identity()['id']
@@ -39,7 +38,7 @@ def unfollow_user(user_id):
 
 
 # Retrieve followed users and followers
-@bp.route("/followed_users", methods=['GET'])
+@blueprint.route("/followed_users", methods=['GET'])
 @jwt_required()
 def get_followed_users():
     current_user_id = get_jwt_identity()['id']
@@ -51,7 +50,7 @@ def get_followed_users():
         'username': user.username} for user in followed_users_data]
     return success_response(followed_users_info , 200)
 
-@bp.route("/followers", methods=['GET'])
+@blueprint.route("/followers", methods=['GET'])
 @jwt_required()
 def get_followers():
     current_user_id = get_jwt_identity()['id']
