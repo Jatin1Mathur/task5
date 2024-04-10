@@ -1,4 +1,3 @@
-
 from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
@@ -80,4 +79,5 @@ def update_post(post_id):
     Post.tags = data.get('tags', Post.tags)
     save_changes()
     return success_response( {'message': 'Post updated successfully'} , 200)
+
 
