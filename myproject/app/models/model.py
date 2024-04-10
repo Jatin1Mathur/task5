@@ -11,11 +11,14 @@ class user(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    view_link = db.Column(db.string(100),default=False)
+    
     
     def __init__(self, email, username, password):
         self.email = email
         self.username = username
-        self.password = password            
+        self.password = password 
+                  
          
          
 class post(db.Model):
