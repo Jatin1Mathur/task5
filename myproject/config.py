@@ -17,3 +17,4 @@ class basesit():
     MAIL_USE_SSL = os.getenv('MAIL_USE_SSL')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     JWT_ALGORITHM = 'HS256'
+    REST_LINK = os.getenv('REST_LINK')
