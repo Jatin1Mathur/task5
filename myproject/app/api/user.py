@@ -1,23 +1,22 @@
+import os
+import base64
 from datetime import datetime 
 import time
-
 from sqlalchemy.exc import IntegrityError
+
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint , Response
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
- 
-
 from app.models.model import db, user 
 from app.utlis import delete, save_changes, add, rollback , send_reset_password_email
 from app import bcrypt
-from app.services.user_services import user_filter, User_log, User_update, User_id, existing_users, update_password, rechange_link
+from app.services.user_services import user_filter, User_log, User_update, User_id, existing_users, update_password, forget_link
 from app.error_management.error_response import e_response , Response
 from app.error_management.success_response import success_response
 from app.validator.validators import check_user_required_fields
 from config import basesit 
-import os
-import base64
+
 
 
 password_reset_tokens = {}
@@ -34,6 +33,7 @@ def register_user():
     new_user = user(data.get('email'), data.get('username'), password=hashed_password , )
     add(new_user)
     return success_response( "User created successfully",200)  
+
 
 @blueprint.route('/login', methods=['POST'])
 def login():
@@ -121,17 +121,17 @@ def change_password():
 def forget_password():
     data = request.json
     email = data.get('email')
- 
-    User = user.query.filter_by(email=email).first()
-    if not user:
+    User = forget_link(email)
+    if not User:
         return e_response('404')
-    expire_time = int(time.time()) + 60
-    password_reset_tokens[email] = expire_time
+    expire_time = int(time.time()) + 120
+    User.expire_time = expire_time
+    save_changes()  
+    exact_time = base64.urlsafe_b64encode(str(expire_time).encode('utf-8')).decode('utf-8')
     reset_token = base64.b64encode(email.encode('utf-8')).decode('utf-8')
-    reset_link = basesit.REST_LINK + reset_token
+    reset_link = basesit.REST_LINK + reset_token + str(exact_time)
     send_reset_password_email(email, reset_link)
     return success_response('Reset password link sent to your email', 200)
-
 
 @blueprint.route('/reset/<reset_token>', methods=['POST'])
 def reset(reset_token):
@@ -139,15 +139,16 @@ def reset(reset_token):
     new_password = data.get('new_password')
     confirm_password = data.get('confirm_password')
     if new_password != confirm_password:
-        return e_response('409')
+        return e_response('400')
     email = base64.b64decode(reset_token.encode('utf-8')).decode('utf-8')
-    if email not in password_reset_tokens or time.time() > password_reset_tokens[email]:
-        return e_response('409')
-    User = user.query.filter_by(email=email).first()
-    if not user:
-        return e_response('409')
-    hashed_password = bcrypt.generate_password_hash(new_password)
-    user.password = hashed_password
-    db.session.commit()
-    del password_reset_tokens[email]
+    User = forget_link(email)
+    if not User:
+        return e_response('400')
+    expire_time = User.expire_time
+    if expire_time and time.time() > expire_time:
+        return e_response('400')
+    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    User.password = hashed_password
+    User.expire_time = None
+    save_changes()
     return success_response('Password reset successful', 200)

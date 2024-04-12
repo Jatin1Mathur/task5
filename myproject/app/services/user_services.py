@@ -19,5 +19,5 @@ def existing_users(new_username , user_id):
 def update_password(pasword_change):
     return(user.query.filter_by(email=pasword_change).first())
 
-def rechange_link(email):
+def forget_link(email):
     return(user.query.filter_by(email=email).first())
