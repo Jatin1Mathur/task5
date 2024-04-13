@@ -11,18 +11,14 @@ class user(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    view_link = db.Column(db.Boolean,default=False)
-    expire_time = db.Column(db.Integer, nullable = True)
-    
-    
+    link_count = db.Column(db.Integer, default = 0)
+   
     def __init__(self, email, username, password):
         self.email = email
         self.username = username
         self.password = password 
+       
         
-                  
-         
-         
 class post(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
@@ -79,4 +75,9 @@ class Like(db.Model):
         self.user_id = user_id
 
 
-        
+class Rest_Token(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    User_Status = db.Column(db.Boolean, default=False)
+    token = db.Column(db.String(255), nullable=False)
+    expire_time = db.Column(db.DateTime, nullable=False, default=datetime.now)

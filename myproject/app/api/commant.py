@@ -14,11 +14,12 @@ from app.error_management.success_response import success_response
 
 
 blueprint = Blueprint('authe', __name__, url_prefix='/auth')
+
+
 @blueprint.route('/posts/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def create_comment(post_id):
     current_user = get_jwt_identity()
-       
     content = request.json.get('content')
     if not content:
         return e_response('400')
@@ -47,6 +48,7 @@ def get_comments(post_id):
         'created_at': c.created_at 
         } for c in comment_on_post]
     return success_response(comments_data, 200)
+
 
 @blueprint.route('/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()

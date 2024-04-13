@@ -1,17 +1,20 @@
 from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
-from flask_jwt_extended import JWTManager, create_access_token , jwt_required 
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required 
 
 from app.models.model import db, post, comment
 from app.utlis import delete, save_changes, add, rollback 
-from app.services.post_services import post_re , post_by_id , user_posts , user_update
-from app.error_management.error_response import e_response , Response
+from app.services.post_services import post_re, post_by_id, user_posts, user_update
+from app.error_management.error_response import e_response, Response
 from app.error_management.success_response import success_response
 from app.validator.validators import check_post_required_fields
 from config import basesit
  
-blueprint= Blueprint('autho',__name__, url_prefix='/auth')
+ 
+blueprint = Blueprint('authen', __name__, url_prefix='/auth')
+
+
 @blueprint.route("/create_blog", methods=['POST'])
 @jwt_required()
 def create_blog():
@@ -26,7 +29,7 @@ def create_blog():
         return e_response('409')
     new_post = post(title=title, content=content, author=author, tags=tags)
     add(new_post)
-    return success_response({'message': 'Blog post created successfully'} ,  201)
+    return success_response({'message': 'Blog post created successfully'}, 201)
 
 
 @blueprint.route("/retrieve_posts/<int:id>", methods=['GET'])
@@ -49,7 +52,7 @@ def retrieve_posts(id=None):
                 posts_data = [{'title': p.title, 'content': p.content,
                                'created_at': p.created_at, 'author': p.author,
                                'tags': p.tags} for p in user_posts]
-                return success_response(posts_data ,  200)
+                return success_response(posts_data,  200)
             else:
                 return e_response('404')
         else:
@@ -65,7 +68,7 @@ def delete_post(id):
     for c in comments_to_delete:  
         db.session.delete(c)
     delete(Post)
-    return success_response( 'Post and associated comments deleted successfully' , 200)
+    return success_response('Post and associated comments deleted successfully', 200)
 
 
 @blueprint.route("/update_posts/<int:post_id>", methods=['PATCH'])
@@ -78,6 +81,6 @@ def update_post(post_id):
     Post.content = data.get('content', Post.content)
     Post.tags = data.get('tags', Post.tags)
     save_changes()
-    return success_response( {'message': 'Post updated successfully'} , 200)
+    return success_response({'message': 'Post updated successfully'}, 200)
 
 

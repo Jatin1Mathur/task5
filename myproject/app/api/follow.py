@@ -10,17 +10,19 @@ from app.error_management.error_response import e_response , Response
 from app.error_management.success_response import success_response
 
 blueprint = Blueprint('authee', __name__, url_prefix='/auth')
+
+
 @blueprint.route("/follow/<int:user_id>", methods=['POST'])
 @jwt_required()
 def follow_user(user_id):
     current_user_id = get_jwt_identity()['id']
     if current_user_id == user_id:
         return e_response('400')
-    if follow_filter(user_id , current_user_id):
+    if follow_filter(user_id, current_user_id):
         return e_response('400')
     new_follow = Follow(following_id=user_id, follower_id=current_user_id)
     add(new_follow)
-    return success_response( 'You are now following this user' , 201)
+    return success_response('You are now following this user', 201)
 
 
 # Unfollow a user
@@ -28,7 +30,7 @@ def follow_user(user_id):
 @jwt_required()
 def unfollow_user(user_id):
     current_user_id = get_jwt_identity()['id']
-    follow = follow_filter(user_id , current_user_id)
+    follow = follow_filter(user_id, current_user_id)
 
     if not follow:
         return e_response('400')
@@ -48,7 +50,8 @@ def get_followed_users():
     followed_users_info = [{
         'id': user.id, 
         'username': user.username} for user in followed_users_data]
-    return success_response(followed_users_info , 200)
+    return success_response(followed_users_info, 200)
+
 
 @blueprint.route("/followers", methods=['GET'])
 @jwt_required()
@@ -58,4 +61,4 @@ def get_followers():
     followers_ids = [follow.follower for follow in follow_users]
     followers_data = [data(user_id) for user_id in followers_ids]
     followers_info = [{'id': user.id,'username': user.username} for user in followers_data]
-    return success_response(followers_info , 200)
+    return success_response(followers_info, 200)

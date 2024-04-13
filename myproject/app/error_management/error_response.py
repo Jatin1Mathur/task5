@@ -35,9 +35,11 @@ error_message = {
     }
 }
 
+
 def e_response(error_code):
     response = f"{error_code}{error_message[error_code]['message']}{error_message[error_code]['detail']}"
     return Response(response=response, status=status.BAD_REQUEST, mimetype="text/plain")
+
 
 if __name__ == "__main__":
     app.run()
