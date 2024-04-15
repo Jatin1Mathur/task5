@@ -30,46 +30,48 @@ def register_user():
     hashed_password = bcrypt.generate_password_hash(data.get('password')).decode('utf-8')
     new_user = user(data.get('email'), data.get('username'), password=hashed_password)
     add(new_user)
-    return success_response( "User created successfully", 200)  
+    return success_response( "User created successfully", 200) 
 
- 
 @blueprint.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    User = user.query.filter_by(email = email).first()
-    if not user:
+    User = user.query.filter_by(email=email).first()
+
+    if not User:
         return e_response("400")
-    if password != password :
-        if User.link_count == 0:
-            User.link_count += 1
-            add(User)
-            return e_response('400')
-        elif User.link_count == 1:
-            User.link_count += 1
-            add(User)
-            return e_response('400')
-        elif User.link_count == 2:
-            User.link_count += 1
-            add(User)
-            return e_response('400')
+
+    if password != User.password:
+        if not User.link_count:  
+            User.link_count = 1
         else:
+            User.link_count += 1
+            
+        if User.link_count == 3:  
             expire_time = datetime.now() + timedelta(seconds=120)
             encoded_expire_time = base64.urlsafe_b64encode(str(expire_time.timestamp()).encode('utf-8')).decode('utf-8')
             link = base64.b64encode(email.encode('utf-8')).decode('utf-8')
             deactivation_link = basesit.DEACTIVATION_LINK + link + str(encoded_expire_time)
-            send_deactivation_link(deactivation_link,email)
+            send_deactivation_link(deactivation_link, email)
+            return e_response('400')
+
+        add(User)
+        return e_response('400')
     else:
-          return success_response('email send successfully' , 200)  
-    User = User_log(email)
-    if not User:
+        User.link_count = 0  
+        add(User)
+
+    User_log = User_log.query.filter_by(email=email).first() 
+    if not User_log:
         return e_response('404')
-    if bcrypt.check_password_hash(User.password, password):
-        access_token = create_access_token(identity={'id': User.id, 'username': User.username, 'email':User.email})
-        return success_response({'access_token':access_token}, 200)
+
+    if bcrypt.check_password_hash(User_log.password, password):
+        access_token = create_access_token(identity={'id': User.id, 'username': User.username, 'email': User.email})
+        return success_response({'access_token': access_token}, 200)
     else:
         return e_response('401')
+    
     
 @blueprint.route('/retrieve', methods=['GET'])
 @jwt_required()
