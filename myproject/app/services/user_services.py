@@ -1,4 +1,4 @@
-from app.models.model import user,Rest_Token
+from app.models.model import user,Rest_Token , db
 
 
 def user_filter(email):
@@ -24,3 +24,9 @@ def existing_users(new_username, user_id):
 def update_password(pasword_change):
     return(user.query.filter_by(email=pasword_change).first())
 
+
+def user_filter_token(user_id, token_encode):
+    return (Rest_Token.query.filter(db.and_(Rest_Token.user_id == user_id and Rest_Token.token == token_encode)).first())
+
+def user_check(user_id):
+    return(Rest_Token.query.filter_by(user_id=user_id).first())
