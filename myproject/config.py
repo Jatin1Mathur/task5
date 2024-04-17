@@ -18,3 +18,4 @@ class basesit():
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     JWT_ALGORITHM = 'HS256'
     REST_LINK = os.getenv('REST_LINK')
+    DEACTIVATION_LINK = os.getenv('DEACTIVATION_LINK')
