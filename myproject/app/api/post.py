@@ -3,7 +3,8 @@ from flask_jwt_extended import jwt_required
 
 from app.models.model import db, Posts, Comment
 from app.utlis import delete, save_changes, add 
-from app.services.post_services import post_re, post_by_id, user_posts, user_update
+from app.services.post_services import (post_re, post_by_id,
+                                        user_posts, user_update)
 from app.error_management.error_response import error_response
 from app.error_management.success_response import success_response
 from app.validator.validators import check_post_required_fields

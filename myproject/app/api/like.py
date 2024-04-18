@@ -3,7 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.models.model import Like
 from app.utlis import delete, save_changes, add
-from app.services.like_services import like_filter, like_entry, get_likes, target_view
+from app.services.like_services import (like_filter, like_entry,
+                                        get_likes, target_view)
 from app.error_management.error_response import error_response
 from app.error_management.success_response import success_response
 
