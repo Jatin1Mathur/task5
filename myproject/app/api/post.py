@@ -1,16 +1,17 @@
+from config import basesit
+
 from sqlalchemy.exc import IntegrityError
 from flask_ngrok import run_with_ngrok 
 from flask import Flask, request, jsonify, Blueprint
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required 
 
-from app.models.model import db, post, comment
+from app.models.model import db, Posts, Comment
 from app.utlis import delete, save_changes, add, rollback 
 from app.services.post_services import post_re, post_by_id, user_posts, user_update
-from app.error_management.error_response import e_response, Response
+from app.error_management.error_response import error_response, Response
 from app.error_management.success_response import success_response
 from app.validator.validators import check_post_required_fields
-from config import basesit
- 
+
  
 blueprint = Blueprint('authen', __name__, url_prefix='/auth')
 
@@ -24,10 +25,10 @@ def create_blog():
     content = data.get('content')
     tags = data.get('tags')
     if not check_post_required_fields(data):
-        return e_response('400')
+        return error_response('400')
     if post_re(title):
-        return e_response('409')
-    new_post = post(title=title, content=content, author=author, tags=tags)
+        return error_response('409')
+    new_post = Posts(title=title, content=content, author=author, tags=tags)
     add(new_post)
     return success_response({'message': 'Blog post created successfully'}, 201)
 
@@ -43,7 +44,7 @@ def retrieve_posts(id=None):
                             'author': Post_retrieve.author,
                             'tags': Post_retrieve.tags})
         else:
-            return e_response('404')
+            return error_response('404')
     else:
         user_id = request.args.get('user_id')
         if user_id:
@@ -54,28 +55,29 @@ def retrieve_posts(id=None):
                                'tags': p.tags} for p in user_posts]
                 return success_response(posts_data,  200)
             else:
-                return e_response('404')
+                return error_response('404')
         else:
-            return e_response('400')
+            return error_response('400')
 
 
 @blueprint.route("/delete_posts/<int:id>", methods=['DELETE'])
 def delete_post(id):
     Post = post_by_id(id)
     if not Post:
-        return e_response('404')
-    comments_to_delete = comment.query.filter_by(post_id=id).all()
+        return error_response('404')
+    comments_to_delete = Comment.query.filter_by(post_id=id).all()
     for c in comments_to_delete:  
         db.session.delete(c)
     delete(Post)
-    return success_response('Post and associated comments deleted successfully', 200)
+    return success_response(
+        'Post and associated comments deleted successfully', 200)
 
 
 @blueprint.route("/update_posts/<int:post_id>", methods=['PATCH'])
 def update_post(post_id):
     Post = user_update(post_id)
     if not Post:
-        return e_response('404')
+        return error_response('404')
     data = request.json
     Post.title = data.get('title', Post.title)
     Post.content = data.get('content', Post.content)

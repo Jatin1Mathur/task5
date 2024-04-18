@@ -1,10 +1,13 @@
-from app.models.model import comment , post
+from app.models.model import Comment, Posts
 
-def target(obj):
-    return(post.query.get(obj))
+
+def target(obj):    
+    return (Posts.query.get(obj))
+
 
 def comments(post_id):
-    return(comment.query.filter_by(post_id=post_id).all())
+    return (Comment.query.filter_by(post_id=post_id).all())
+
 
 def comment_delete(comment_id):
-    return(comment.query.get(comment_id))
+    return (Comment.query.get(comment_id))
