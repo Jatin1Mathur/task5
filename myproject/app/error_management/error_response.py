@@ -6,7 +6,8 @@ app = Flask(__name__)
 error_message = {
     '500': {
         'message': "Internal error.",
-        'detail': "An internal server error occurred while processing the request."
+        'detail':
+            "An internal server error occurred while processing the request."
     },
     '404': {
         'message': "No user exists with given user id.",
@@ -31,12 +32,13 @@ error_message = {
     },
     '409': {
         'message': "Conflict",
-        'detail': "Used to indicate a conflict with the current state of a resource"
+        'detail': 
+            "Used to indicate a conflict with the current state of a resource"
     }
 }
 
 
-def e_response(error_code):
+def error_response(error_code):
     response = f"{error_code}{error_message[error_code]['message']}{error_message[error_code]['detail']}"
     return Response(response=response, status=status.BAD_REQUEST, mimetype="text/plain")
 

@@ -4,14 +4,14 @@ from datetime import datetime
 db = SQLAlchemy()
 
 
-class user(db.Model):
+class User(db.Model):
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    link_count = db.Column(db.Integer, default = 0)
+    link_count = db.Column(db.Integer, default=0)
    
     def __init__(self, email, username, password):
         self.email = email
@@ -19,15 +19,18 @@ class user(db.Model):
         self.password = password 
        
         
-class post(db.Model):
+class Posts(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete='cascade'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id",
+                                                  ondelete='cascade'))
     title = db.Column(db.String(100), unique=True, nullable=False)
     content = db.Column(db.String(6000), nullable=False)
     author = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, 
+                           default=datetime.utcnow, 
+                           onupdate=datetime.utcnow)
     tags = db.Column(db.String(50), nullable=False)
     views = db.Column(db.Integer, default=0)
     
@@ -38,12 +41,13 @@ class post(db.Model):
         self.tags = tags  
 
   
-class comment(db.Model):
+class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(3000), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id',
+                                                  ondelete='cascade'))
 
     def __init__(self, content, created_at, post_id, user_id):
         self.content = content
@@ -54,9 +58,13 @@ class comment(db.Model):
      
 class Follow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    follower_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'))
-    following_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id',
+                                                      ondelete='cascade'))
+    following_id = db.Column(db.Integer, db.ForeignKey('user.id',
+                                                       ondelete='cascade'),
+                             nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
     
     def __init__(self, following_id, follower_id):
         self.following_id = following_id
@@ -67,7 +75,8 @@ class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))  
     status = db.Column(db.Boolean, default=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id',
+                                                  ondelete='cascade'))
 
     def __init__(self, post_id, status, user_id): 
         self.post_id = post_id
