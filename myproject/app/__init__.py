@@ -1,14 +1,12 @@
-from config import basesit
-
-from flask import Flask, request, jsonify
+from flask import Flask
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
-from flask_jwt_extended import JWTManager, create_access_token
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager
+
 
 from app.models.model import db
-
+from config import basesit
 
 bcrypt = Bcrypt()
 jwt = JWTManager()
