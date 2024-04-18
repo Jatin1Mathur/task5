@@ -1,12 +1,10 @@
-from flask_ngrok import run_with_ngrok 
-from flask import Flask, request, jsonify, Blueprint
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from flask_migrate import Migrate
+from flask import Blueprint
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from app.models.model import db, User, Follow
+from app.models.model import Follow
 from app.utlis import delete, add 
 from app.services.follow_services import follow_filter, follow_users, data
-from app.error_management.error_response import error_response, Response
+from app.error_management.error_response import error_response
 from app.error_management.success_response import success_response
 
 blueprint = Blueprint('authee', __name__, url_prefix='/auth')

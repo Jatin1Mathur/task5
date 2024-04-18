@@ -1,22 +1,19 @@
-import time
 import base64
-import random
 import secrets
-from config import basesit
 from datetime import datetime, timedelta 
 from sqlalchemy.exc import IntegrityError
 
-from flask_ngrok import run_with_ngrok 
-from flask import Flask, request, jsonify, Blueprint, Response 
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask import request, Blueprint
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
-from app.models.model import db, User, Rest_Token
+from app.models.model import User, Rest_Token
 from app.utlis import delete, save_changes, add, rollback, send_reset_password_email, send_deactivation_link, encrypt, decrypt
 from app import bcrypt
-from app.services.user_services import user_filter, User_log, User_update, User_id, existing_users, update_password, user_filter_token, user_check
-from app.error_management.error_response import error_response, Response
+from app.services.user_services import user_filter,  User_update, User_id, existing_users, update_password
+from app.error_management.error_response import error_response
 from app.error_management.success_response import success_response
 from app.validator.validators import check_user_required_fields
+from config import basesit
 
 
 blueprint = Blueprint('auth', __name__, url_prefix='/auth')
@@ -35,6 +32,7 @@ def register_user():
     add(new_user)
     return success_response("User created successfully", 200) 
 
+
 @blueprint.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -43,31 +41,25 @@ def login():
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        return error_response("400")
+        return error_response("404") 
 
-    hashed_password = user.password
-    if not bcrypt.check_password_hash(hashed_password, password):
-       
+    if not bcrypt.check_password_hash(user.password, password):
         if user.link_count is None:
             user.link_count = 1
         else:
             user.link_count += 1
-        
-        if user.link_count == 3:
-            
-            expire_time = datetime.now() + timedelta(seconds=120)
-            encode_expire_time = base64.urlsafe_b64encode(str(expire_time.timestamp()).encode('utf-8')).decode('utf-8')
-            link = base64.b64encode(email.encode('utf-8')).decode('utf-8')
-            deactivation_link = basesit.DEACTIVATION_LINK + link + str(encode_expire_time)
-            send_deactivation_link(deactivation_link, email)
-            return error_response('400')
+        if user.link_count == 4:
+            token = secrets.token_urlsafe(4)
+            encoded_email_id = base64.b64encode(email.encode('utf-8')).decode('utf-8')
+            link = base64.b64encode(token.encode('utf-8')).decode('utf-8')
+            deactivation_link = basesit.DEACTIVATION_LINK + encoded_email_id + link
+            send_deactivation_link(deactivation_link, email)        
+            return error_response('401')  
         add(user)
-        return error_response('401')
+        print(user)
+        return error_response('401')  
     else:
-        user.link_count = 0
-        add(user)
-
-    user_log = user.query.filter_by(email=email).first()
+        user_log = user.query.filter_by(email=email).first()
     if not user_log:
         return error_response('404')
 
@@ -79,7 +71,7 @@ def login():
     else:
         return error_response('401')
 
-    
+   
 @blueprint.route('/retrieve', methods=['GET'])
 @jwt_required()
 def get_user_info():
@@ -87,8 +79,8 @@ def get_user_info():
     if current_user['id']:
         user = User_id(current_user['id'])
         if user:
-            return success_response({'email': User.email,
-                                     'username': User.username}, 200)
+            return success_response({'email': user.email,
+                                     'username': user.username}, 200)
     return error_response('401')
 
 

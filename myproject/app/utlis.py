@@ -1,5 +1,5 @@
 from app.models.model import db
-from flask_mail import Mail, Message
+from flask_mail import Message
 from app import mail
 from cryptography.fernet import Fernet
 import base64

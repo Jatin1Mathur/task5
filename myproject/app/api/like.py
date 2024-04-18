@@ -1,14 +1,10 @@
-from config import basesit
+from flask import Blueprint
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from flask_migrate import Migrate
-from flask_ngrok import run_with_ngrok 
-from flask import Flask, request, jsonify, Blueprint
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-
-from app.models.model import db, Posts, Like
+from app.models.model import Like
 from app.utlis import delete, save_changes, add
 from app.services.like_services import like_filter, like_entry, get_likes, target_view
-from app.error_management.error_response import error_response, Response
+from app.error_management.error_response import error_response
 from app.error_management.success_response import success_response
 
 

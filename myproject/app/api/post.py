@@ -1,18 +1,14 @@
-from config import basesit
-
-from sqlalchemy.exc import IntegrityError
-from flask_ngrok import run_with_ngrok 
-from flask import Flask, request, jsonify, Blueprint
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required 
+from flask import request, jsonify, Blueprint
+from flask_jwt_extended import jwt_required 
 
 from app.models.model import db, Posts, Comment
-from app.utlis import delete, save_changes, add, rollback 
+from app.utlis import delete, save_changes, add 
 from app.services.post_services import post_re, post_by_id, user_posts, user_update
-from app.error_management.error_response import error_response, Response
+from app.error_management.error_response import error_response
 from app.error_management.success_response import success_response
 from app.validator.validators import check_post_required_fields
 
- 
+
 blueprint = Blueprint('authen', __name__, url_prefix='/auth')
 
 

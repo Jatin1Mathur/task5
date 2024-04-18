@@ -1,13 +1,10 @@
 from datetime import datetime 
 
-from flask_migrate import Migrate
-from flask_ngrok import run_with_ngrok 
-from flask import Flask, request, jsonify, Blueprint
-from flask_jwt_extended import get_jwt_identity, jwt_required, JWTManager, create_access_token
+from flask import request, Blueprint
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from app.models.model import db,  Posts, Comment
-from app.utlis import delete,  add
-from app.models.model import db, User
+from app.models.model import Posts, Comment
+from app.utlis import delete, add
 from app.services.commant_services import target, comments, comment_delete
 from app.error_management.error_response import error_response 
 from app.error_management.success_response import success_response
